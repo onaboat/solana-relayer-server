@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
-import { AnchorProvider, Program } from '@coral-xyz/anchor';
+import { AnchorProvider, Program, BN } from '@coral-xyz/anchor';
 import idl from './idl.json' with { type: 'json' };
 
 dotenv.config();
@@ -21,7 +21,8 @@ const getProgram = () => {
     signAllTransactions: async txs => txs.map(tx => { tx.partialSign(feeWallet); return tx; })
   }, { preflightCommitment: "processed" });
 
-  return new Program(idl, programId, provider);
+  // Remove programId parameter for Anchor 0.31.0
+  return new Program(idl, provider);
 };
 
 app.post('/tip', async (req, res) => {
@@ -46,7 +47,7 @@ app.post('/tip', async (req, res) => {
     );
 
     const txSig = await program.methods
-      .tipCreator(viewerUserId, creatorUserId, amount)
+      .tipCreator(viewerUserId, creatorUserId, new BN(amount))
       .accounts({
         viewerProfile: viewerPda,
         creatorProfile: creatorPda,
