@@ -96,7 +96,8 @@ const getProgram = () => {
       }
     );
 
-    return new Program(idl, programId, provider);
+    // THIS IS THE KEY CHANGE - Remove programId parameter
+    return new Program(idl, provider);
   } catch (error) {
     console.error('Failed to create program:', error);
     throw error;
@@ -257,6 +258,15 @@ app.post('/tip', async (req, res) => {
       code: err.code || 'UNKNOWN_ERROR'
     });
   }
+});
+
+app.get('/debug-idl', (req, res) => {
+  res.json({
+    programId: programId.toString(),
+    instructions: idl.instructions.map(i => i.name),
+    accounts: idl.accounts.map(a => a.name),
+    hasInitializeFeeVault: idl.instructions.some(i => i.name === 'initialize_fee_vault')
+  });
 });
 
 const PORT = process.env.PORT || 8080;
