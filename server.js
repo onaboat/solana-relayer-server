@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import { AnchorProvider, Program } from '@coral-xyz/anchor';
-import idl from './idl.json' assert { type: 'json' };
+import idl from './idl.json' with { type: 'json' };
 
 dotenv.config();
 const app = express();
