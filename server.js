@@ -68,4 +68,5 @@ app.post('/tip', async (req, res) => {
 
 app.get('/', (req, res) => res.send('Relayer is live 🚀'));
 
-app.listen(3000, () => console.log('Relayer running on port 3000'));
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(`Relayer running on port ${PORT}`));
