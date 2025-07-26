@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
-import { AnchorProvider, Program, BN } from '@coral-xyz/anchor';
+import { AnchorProvider, Program } from '@coral-xyz/anchor';
+import { BN } from 'bn.js';
 import idl from './idl.json' with { type: 'json' };
 
 dotenv.config();
