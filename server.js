@@ -26,6 +26,32 @@ const getProgram = () => {
   return new Program(idl, provider);
 };
 
+app.post('/initialize-fee-vault', async (req, res) => {
+  try {
+    const program = getProgram();
+
+    const [feeVaultPda] = await PublicKey.findProgramAddress(
+      [Buffer.from("fee_vault")],
+      programId
+    );
+
+    const txSig = await program.methods
+      .initializeFeeVault()
+      .accounts({
+        feeVault: feeVaultPda,
+        authority: feeWallet.publicKey,
+        systemProgram: SystemProgram.programId
+      })
+      .signers([feeWallet])
+      .rpc();
+
+    res.json({ success: true, txSig, feeVault: feeVaultPda.toString() });
+  } catch (err) {
+    console.error('Fee vault initialization failed:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/tip', async (req, res) => {
   const { viewerUserId, creatorUserId, viewerWallet, creatorWallet, amount } = req.body;
 
@@ -52,16 +78,16 @@ app.post('/tip', async (req, res) => {
       .accounts({
         viewerProfile: viewerPda,
         creatorProfile: creatorPda,
-        creatorProfileData: creatorPda,
         feeVault: feeVaultPda,
+        feePayer: feeWallet.publicKey, // Relayer pays transaction fee
         viewer: new PublicKey(viewerWallet),
         creator: new PublicKey(creatorWallet),
         systemProgram: SystemProgram.programId
       })
-      .signers([feeWallet])
+      .signers([feeWallet]) // Only relayer signs
       .rpc();
 
-    res.json({ success: true, txSig });
+    res.json({ success: true, txSig, message: 'Tip sent and fee reimbursed' });
   } catch (err) {
     console.error('Tip failed:', err);
     res.status(500).json({ error: err.message });
