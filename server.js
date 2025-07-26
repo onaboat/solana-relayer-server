@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
-import { AnchorProvider, Program } from '@project-serum/anchor';
+import { AnchorProvider, Program } from '@coral-xyz/anchor';
 import idl from './idl.json' assert { type: 'json' };
 
 dotenv.config();
