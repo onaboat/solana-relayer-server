@@ -169,6 +169,49 @@ app.post('/initialize-fee-vault', async (req, res) => {
   }
 });
 
+//set up user pda
+app.post('/initialize-profile', async (req, res) => {
+  const { userId, userWallet } = req.body;
+
+  if (!userId || !userWallet) {
+    return res.status(400).json({ 
+      error: 'Missing required parameters: userId, userWallet' 
+    });
+  }
+
+  try {
+    const program = getProgram();
+    const userPubkey = new PublicKey(userWallet);
+
+    const [profilePda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("profile"), userPubkey.toBuffer(), Buffer.from(userId)],
+      programId
+    );
+
+    const txSig = await program.methods
+      .initializeProfile(userId)
+      .accounts({
+        profile: profilePda,
+        user: userPubkey,
+        systemProgram: SystemProgram.programId
+      })
+      .rpc();
+
+    console.log('Profile initialized:', txSig);
+    res.json({ 
+      success: true, 
+      txSig, 
+      profilePda: profilePda.toString() 
+    });
+  } catch (err) {
+    console.error('Profile initialization failed:', err);
+    res.status(500).json({ 
+      error: err.message,
+      details: err.logs || []
+    });
+  }
+});
+
 app.post('/tip', async (req, res) => {
   const { viewerUserId, creatorUserId, viewerWallet, creatorWallet, amount } = req.body;
 
