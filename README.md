@@ -51,7 +51,7 @@ node index.js
 
 ---
 
-## 📡 API Endpoints
+##  API Endpoints
 
 ### Health
 
@@ -131,7 +131,7 @@ Returns loaded IDL metadata and supported instructions.
 
 ---
 
-## 🖥️ Usage Diagram (ASCII)
+##  Usage Diagram (ASCII)
 
 ```
           +------------------+         POST /initialize-profile         +------------------+
@@ -175,7 +175,7 @@ Returns loaded IDL metadata and supported instructions.
 
 ---
 
-## 🛡️ Error Handling
+##  Error Handling
 
 - Graceful handling of uncaught exceptions
 - Validations for all inputs (wallets, amounts, IDs)

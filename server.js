@@ -55,7 +55,7 @@ try {
 let connection, feeWallet, programId;
 try {
   connection = new Connection(
-    process.env.RPC_URL || 'https://yolane-wannof-fast-devnet.helius-rpc.com',
+    process.env.RPC_URL || 'https://api.devnet.solana.com',
     'confirmed'
   );
   
