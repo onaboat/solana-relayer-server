@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { AnchorProvider, Program } from '@coral-xyz/anchor';
 import { BN } from 'bn.js'; // Use bn.js instead of Anchor's BN
 import { readFileSync } from 'fs';
@@ -55,7 +55,7 @@ try {
 let connection, feeWallet, programId;
 try {
   connection = new Connection(
-    process.env.RPC_URL || 'https://api.devnet.solana.com',
+    process.env.RPC_URL || 'https://yolane-wannof-fast-devnet.helius-rpc.com',
     'confirmed'
   );
   
@@ -295,6 +295,85 @@ app.post('/tip', async (req, res) => {
     });
   } catch (err) {
     console.error('Tip failed:', err);
+    res.status(500).json({ 
+      error: err.message,
+      details: err.logs || [],
+      code: err.code || 'UNKNOWN_ERROR'
+    });
+  }
+});
+
+app.post('/fund-pda', async (req, res) => {
+  const { pdaAddress } = req.body;
+
+  console.log('Fund PDA request received:', { pdaAddress });
+  
+  // Validate required fields
+  if (!pdaAddress) {
+    return res.status(400).json({ 
+      error: 'Missing required parameter: pdaAddress' 
+    });
+  }
+
+  // Validate PDA address format
+  let targetPda;
+  try {
+    targetPda = new PublicKey(pdaAddress);
+  } catch (error) {
+    return res.status(400).json({ 
+      error: 'Invalid PDA address format' 
+    });
+  }
+
+  try {
+    // Check relayer wallet balance first
+    const relayerBalance = await connection.getBalance(feeWallet.publicKey);
+    const transferAmount = 0.1 * 1e9; // 0.1 SOL in lamports
+    
+    if (relayerBalance < transferAmount) {
+      return res.status(400).json({ 
+        error: 'Insufficient balance in relayer wallet',
+        relayerBalance: relayerBalance / 1e9 + ' SOL',
+        requiredAmount: '0.1 SOL'
+      });
+    }
+
+    // Create transfer instruction
+    const transferInstruction = SystemProgram.transfer({
+      fromPubkey: feeWallet.publicKey,
+      toPubkey: targetPda,
+      lamports: transferAmount
+    });
+
+    // Create and send transaction
+    const transaction = new Transaction().add(transferInstruction);
+    
+    // Get recent blockhash
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = feeWallet.publicKey;
+
+    // Sign and send transaction
+    transaction.sign(feeWallet);
+    const txSig = await connection.sendRawTransaction(transaction.serialize());
+    
+    // Wait for confirmation
+    const confirmation = await connection.confirmTransaction(txSig, 'confirmed');
+
+    if (confirmation.value.err) {
+      throw new Error(`Transaction failed: ${confirmation.value.err}`);
+    }
+
+    console.log('PDA funded successfully:', txSig);
+    res.json({ 
+      success: true, 
+      txSig,
+      amount: '0.1 SOL',
+      targetPda: targetPda.toString(),
+      message: 'PDA funded successfully'
+    });
+  } catch (err) {
+    console.error('Fund PDA failed:', err);
     res.status(500).json({ 
       error: err.message,
       details: err.logs || [],
